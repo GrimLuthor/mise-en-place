@@ -139,31 +139,42 @@ export default function Gallery() {
                 {tag}
               </button>
             ))}
-            {/* Auth button: mobile only, lives here to avoid search row overflow */}
-            {isSignedIn ? (
-              <button
-                type="button"
-                onClick={logout}
-                className="sm:hidden ml-auto flex items-center gap-1 text-xs text-emerald-700 font-medium px-2.5 py-1 rounded-full bg-emerald-50 hover:bg-emerald-100 transition-colors"
-              >
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-3 h-3">
-                  <path d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" />
-                  <path d="M12 10v6m-3-3l3 3 3-3" />
-                </svg>
-                Synced
-              </button>
-            ) : (
-              <button
-                type="button"
-                onClick={() => login()}
-                className="sm:hidden ml-auto flex items-center gap-1 text-xs text-gray-600 font-medium px-2.5 py-1 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors"
-              >
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-3 h-3">
-                  <path d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" />
-                </svg>
-                Sign in
-              </button>
-            )}
+            {/* Install + auth: mobile only, lives here to avoid search row overflow */}
+            <div className="sm:hidden ml-auto flex items-center gap-1.5">
+              {canInstall && (
+                <button
+                  type="button"
+                  onClick={install}
+                  className="flex items-center gap-1 text-xs text-emerald-700 font-medium px-2.5 py-1 rounded-full bg-emerald-50 hover:bg-emerald-100 transition-colors"
+                >
+                  Install
+                </button>
+              )}
+              {isSignedIn ? (
+                <button
+                  type="button"
+                  onClick={logout}
+                  className="flex items-center gap-1 text-xs text-emerald-700 font-medium px-2.5 py-1 rounded-full bg-emerald-50 hover:bg-emerald-100 transition-colors"
+                >
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-3 h-3">
+                    <path d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" />
+                    <path d="M12 10v6m-3-3l3 3 3-3" />
+                  </svg>
+                  Synced
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => login()}
+                  className="flex items-center gap-1 text-xs text-gray-600 font-medium px-2.5 py-1 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors"
+                >
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-3 h-3">
+                    <path d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" />
+                  </svg>
+                  Sign in
+                </button>
+              )}
+            </div>
           </div>
 
           {/* Time range filter */}
