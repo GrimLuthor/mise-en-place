@@ -2,12 +2,6 @@ import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useRecipe } from '../hooks/useRecipes'
 import { useWakeLock } from '../hooks/useWakeLock'
-import { getConversions } from '../lib/units'
-import type { UnitType } from '../types'
-
-const CONVERTIBLE = new Set<UnitType>(['metric_mass', 'metric_volume', 'imperial_mass', 'imperial_volume'])
-
-type SessionConv = { quantity: string; unit: string }
 
 export default function CookingMode() {
   const { id } = useParams<{ id: string }>()
@@ -23,27 +17,12 @@ export default function CookingMode() {
 
   const [checked, setChecked] = useState<Set<string>>(new Set())
   const [activeStep, setActiveStep] = useState(0)
-  const [convs, setConvs] = useState<Map<string, SessionConv>>(new Map())
-  const [popoverId, setPopoverId] = useState<string | null>(null)
-
-  // Close conversion popover on any outside click
-  useEffect(() => {
-    if (!popoverId) return
-    const close = () => setPopoverId(null)
-    const timer = setTimeout(() => document.addEventListener('click', close, { once: true }), 0)
-    return () => { clearTimeout(timer); document.removeEventListener('click', close) }
-  }, [popoverId])
 
   const toggle = (ingId: string) => setChecked(prev => {
     const next = new Set(prev)
     next.has(ingId) ? next.delete(ingId) : next.add(ingId)
     return next
   })
-
-  const applyConv = (ingId: string, quantity: string, unit: string) => {
-    setConvs(prev => new Map(prev).set(ingId, { quantity, unit }))
-    setPopoverId(null)
-  }
 
   const handleExit = () => {
     if (document.fullscreenElement) document.exitFullscreen().catch(() => {})
@@ -79,15 +58,7 @@ export default function CookingMode() {
             <h2 className="shrink-0 text-xs font-semibold uppercase tracking-widest text-white/40 px-6 pt-6 pb-4">Ingredients</h2>
             <ul className="flex-1 overflow-y-auto px-6 pb-6">
               {recipe.ingredients.map(ing => {
-                const sessionConv = convs.get(ing.id)
-                const currentQty = sessionConv ? parseFloat(sessionConv.quantity) : (ing.quantity ?? 0)
-                const currentUnit = sessionConv?.unit ?? ing.unit ?? ''
-                const displayQty = sessionConv?.quantity ?? (ing.quantity != null ? String(ing.quantity) : '')
                 const isChecked = checked.has(ing.id)
-                const canConvert = CONVERTIBLE.has(ing.unitType) && currentQty !== 0 && currentUnit !== ''
-                const options = canConvert ? getConversions(currentQty, currentUnit, ing.unitType) : []
-                const isOpen = popoverId === ing.id
-
                 return (
                   <li key={ing.id}>
                     <label className={`flex items-start gap-3 px-2 py-3 rounded-xl cursor-pointer select-none min-h-[48px] transition-colors ${
@@ -104,44 +75,9 @@ export default function CookingMode() {
                         )}
                       </div>
                       <span className={`text-base flex-1 leading-relaxed ${isChecked ? 'line-through' : ''}`}>
-                        {displayQty && `${displayQty} `}
-                        {currentUnit && (
-                          canConvert ? (
-                            <button
-                              type="button"
-                              onClick={e => { e.preventDefault(); e.stopPropagation(); setPopoverId(isOpen ? null : ing.id) }}
-                              aria-label={`Convert ${currentUnit}`}
-                              className="font-medium text-emerald-400 hover:text-emerald-300 transition-colors"
-                            >
-                              {currentUnit}<span className="text-xs ml-0.5 opacity-60">⇄</span>
-                            </button>
-                          ) : (
-                            <span className="font-medium">{currentUnit}</span>
-                          )
-                        )}
-                        {currentUnit && ' '}
-                        {ing.name}
-                        {ing.note && <span className="text-white/50">, {ing.note}</span>}
+                        {ing.text}
                       </span>
                     </label>
-
-                    {isOpen && options.length > 0 && (
-                      <div
-                        className="ml-10 mb-1 bg-gray-800 border border-white/10 rounded-xl overflow-hidden"
-                        onClick={e => e.stopPropagation()}
-                      >
-                        {options.map(opt => (
-                          <button
-                            key={opt.unit}
-                            type="button"
-                            onClick={() => applyConv(ing.id, opt.quantity, opt.unit)}
-                            className="block w-full text-left px-4 py-3 text-sm hover:bg-white/10 transition-colors border-b border-white/5 last:border-0"
-                          >
-                            <span className="font-semibold">{opt.quantity}</span> {opt.unit}
-                          </button>
-                        ))}
-                      </div>
-                    )}
                   </li>
                 )
               })}

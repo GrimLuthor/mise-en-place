@@ -1,6 +1,5 @@
 import { useEffect, useRef, type DragEvent, type KeyboardEvent } from 'react'
 import type { Ingredient } from '../types'
-import { UNIT_GROUPS, getUnitType } from '../lib/units'
 
 interface Props {
   ingredient: Ingredient
@@ -18,24 +17,15 @@ export default function IngredientRow({
   ingredient, onChange, onDelete, onAddAfter,
   onDragStart, onDragOver, onDrop, focusOnMount, isDragging,
 }: Props) {
-  const quantityRef = useRef<HTMLInputElement>(null)
+  const ref = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
-    if (focusOnMount) quantityRef.current?.focus()
+    if (focusOnMount) ref.current?.focus()
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
-  const patch = (p: Partial<Ingredient>) => onChange({ ...ingredient, ...p })
-
-  const handleUnitSelect = (value: string) => {
-    if (value === '') patch({ unit: undefined, unitType: 'none' })
-    else if (value === '__custom__') patch({ unit: '', unitType: 'custom' })
-    else patch({ unit: value, unitType: getUnitType(value) })
+  const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') { e.preventDefault(); onAddAfter() }
   }
-
-  const next = (e: KeyboardEvent) => { if (e.key === 'Enter') { e.preventDefault(); onAddAfter() } }
-
-  const isCustom = ingredient.unitType === 'custom'
-  const selectVal = isCustom ? '__custom__' : (ingredient.unit ?? '')
 
   return (
     <div
@@ -48,67 +38,16 @@ export default function IngredientRow({
       }`}
     >
       <span className="cursor-grab text-gray-300 hover:text-gray-500 select-none text-lg px-0.5" aria-hidden>⠿</span>
-
       <input
-        ref={quantityRef}
-        type="number"
-        min="0"
-        step="any"
-        value={ingredient.quantity ?? ''}
-        onChange={e => patch({ quantity: e.target.value === '' ? undefined : Number(e.target.value) })}
-        onKeyDown={next}
-        aria-label="Quantity"
-        placeholder="qty"
-        className="w-16 border border-gray-300 rounded px-2 py-1 text-sm text-right focus:outline-none focus:ring-1 focus:ring-emerald-500"
-      />
-
-      <select
-        value={selectVal}
-        onChange={e => handleUnitSelect(e.target.value)}
-        aria-label="Unit"
-        className="border border-gray-300 rounded px-1 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-emerald-500 bg-white"
-      >
-        <option value="">—</option>
-        {UNIT_GROUPS.map(g => (
-          <optgroup key={g.label} label={g.label}>
-            {g.units.map(u => <option key={u} value={u}>{u}</option>)}
-          </optgroup>
-        ))}
-        <option value="__custom__">custom…</option>
-      </select>
-
-      {isCustom && (
-        <input
-          type="text"
-          value={ingredient.unit ?? ''}
-          onChange={e => patch({ unit: e.target.value })}
-          onKeyDown={next}
-          aria-label="Custom unit"
-          placeholder="unit"
-          className="w-20 border border-gray-300 rounded px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-emerald-500"
-        />
-      )}
-
-      <input
+        ref={ref}
         type="text"
-        value={ingredient.name}
-        onChange={e => patch({ name: e.target.value })}
-        onKeyDown={next}
-        aria-label="Ingredient name"
-        placeholder="ingredient name"
+        value={ingredient.text}
+        onChange={e => onChange({ ...ingredient, text: e.target.value })}
+        onKeyDown={handleKeyDown}
+        aria-label="Ingredient"
+        placeholder="e.g. 200g flour"
         className="flex-1 min-w-0 border border-gray-300 rounded px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-emerald-500"
       />
-
-      <input
-        type="text"
-        value={ingredient.note ?? ''}
-        onChange={e => patch({ note: e.target.value || undefined })}
-        onKeyDown={next}
-        aria-label="Note"
-        placeholder="note"
-        className={`${isCustom ? 'w-20' : 'w-28'} border border-gray-300 rounded px-2 py-1 text-sm text-gray-500 focus:outline-none focus:ring-1 focus:ring-emerald-500`}
-      />
-
       <button
         type="button"
         onClick={onDelete}

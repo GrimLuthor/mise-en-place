@@ -1,19 +1,6 @@
-export type UnitType =
-  | 'metric_mass'
-  | 'metric_volume'
-  | 'imperial_mass'
-  | 'imperial_volume'
-  | 'count'
-  | 'custom'
-  | 'none'
-
 export interface Ingredient {
   id: string
-  quantity?: number
-  unit?: string
-  unitType: UnitType
-  name: string
-  note?: string
+  text: string
 }
 
 export interface Step {

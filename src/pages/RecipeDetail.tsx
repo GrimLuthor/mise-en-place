@@ -5,16 +5,6 @@ import { db } from '../db/db'
 import { getToken } from '../store/authStore'
 import { syncAllToDrive } from '../lib/drive'
 import ImageCarousel from '../components/ImageCarousel'
-import type { Ingredient } from '../types'
-
-function formatIngredient(ing: Ingredient): string {
-  const parts: string[] = []
-  if (ing.quantity != null) parts.push(String(ing.quantity))
-  if (ing.unit) parts.push(ing.unit)
-  parts.push(ing.name)
-  if (ing.note) parts.push(`(${ing.note})`)
-  return parts.join(' ')
-}
 
 export default function RecipeDetail() {
   const { id } = useParams<{ id: string }>()
@@ -29,7 +19,7 @@ export default function RecipeDetail() {
     await db.images.where('recipeId').equals(id!).delete()
     await db.recipes.delete(id!)
     const token = getToken()
-    if (token) syncAllToDrive(token, deletedImageIds).catch(() => {})
+    if (token) await syncAllToDrive(token, deletedImageIds).catch(() => {})
     navigate('/')
   }
 
@@ -88,7 +78,7 @@ export default function RecipeDetail() {
               <h2 className="font-semibold text-gray-900 mb-3">Ingredients</h2>
               <ul className="space-y-1.5 text-sm text-gray-700">
                 {recipe.ingredients.map(ing => (
-                  <li key={ing.id}>{formatIngredient(ing)}</li>
+                  <li key={ing.id}>{ing.text}</li>
                 ))}
               </ul>
             </section>
