@@ -62,8 +62,10 @@ export default function RecipeEdit() {
   const [focusIngId, setFocusIngId] = useState<string | null>(null)
   const [focusStepId, setFocusStepId] = useState<string | null>(null)
   const [titleError, setTitleError] = useState(false)
-  const [pasteText, setPasteText] = useState('')
-  const [showPaste, setShowPaste] = useState(false)
+  const [pasteIngText, setPasteIngText] = useState('')
+  const [showPasteIng, setShowPasteIng] = useState(false)
+  const [pasteStepText, setPasteStepText] = useState('')
+  const [showPasteStep, setShowPasteStep] = useState(false)
 
   useEffect(() => {
     if (initialized) return
@@ -89,11 +91,19 @@ export default function RecipeEdit() {
   }
 
   const importPastedIngredients = () => {
-    const lines = pasteText.split('\n').map(l => l.trim()).filter(Boolean)
+    const lines = pasteIngText.split('\n').map(l => l.trim()).filter(Boolean)
     if (!lines.length) return
     setIngredients([...form.ingredients, ...lines.map(text => ({ id: uuidv4(), text }))])
-    setPasteText('')
-    setShowPaste(false)
+    setPasteIngText('')
+    setShowPasteIng(false)
+  }
+
+  const importPastedSteps = () => {
+    const lines = pasteStepText.split('\n').map(l => l.trim()).filter(Boolean)
+    if (!lines.length) return
+    setSteps([...form.steps, ...lines.map(text => ({ id: uuidv4(), text }))])
+    setPasteStepText('')
+    setShowPasteStep(false)
   }
 
   const addStepAfter = (index: number) => {
@@ -246,16 +256,16 @@ export default function RecipeEdit() {
                 className="text-sm text-emerald-600 hover:text-emerald-800 font-medium">
                 + Add ingredient
               </button>
-              <button type="button" onClick={() => setShowPaste(s => !s)}
+              <button type="button" onClick={() => setShowPasteIng(s => !s)}
                 className="text-sm text-gray-400 hover:text-gray-600 font-medium">
-                {showPaste ? '− Hide paste' : '+ Paste list'}
+                {showPasteIng ? '− Hide paste' : '+ Paste list'}
               </button>
             </div>
-            {showPaste && (
+            {showPasteIng && (
               <div className="mt-3 space-y-2">
                 <textarea
-                  value={pasteText}
-                  onChange={e => setPasteText(e.target.value)}
+                  value={pasteIngText}
+                  onChange={e => setPasteIngText(e.target.value)}
                   placeholder={"One ingredient per line:\n200g flour\n2 eggs\n1 tsp salt"}
                   rows={5}
                   autoFocus
@@ -282,10 +292,32 @@ export default function RecipeEdit() {
                 />
               ))}
             </div>
-            <button type="button" onClick={() => addStepAfter(form.steps.length - 1)}
-              className="mt-3 text-sm text-emerald-600 hover:text-emerald-800 font-medium">
-              + Add step
-            </button>
+            <div className="mt-3 flex items-center gap-4">
+              <button type="button" onClick={() => addStepAfter(form.steps.length - 1)}
+                className="text-sm text-emerald-600 hover:text-emerald-800 font-medium">
+                + Add step
+              </button>
+              <button type="button" onClick={() => setShowPasteStep(s => !s)}
+                className="text-sm text-gray-400 hover:text-gray-600 font-medium">
+                {showPasteStep ? '− Hide paste' : '+ Paste list'}
+              </button>
+            </div>
+            {showPasteStep && (
+              <div className="mt-3 space-y-2">
+                <textarea
+                  value={pasteStepText}
+                  onChange={e => setPasteStepText(e.target.value)}
+                  placeholder={"One step per line:\nPreheat oven to 180°C\nMix flour and eggs\nBake for 30 minutes"}
+                  rows={5}
+                  autoFocus
+                  className={`${inputCls} resize-y`}
+                />
+                <button type="button" onClick={importPastedSteps}
+                  className="text-sm bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-lg font-medium transition-colors">
+                  Import
+                </button>
+              </div>
+            )}
           </div>
 
           <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
