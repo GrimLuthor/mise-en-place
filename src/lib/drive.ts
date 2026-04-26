@@ -117,8 +117,13 @@ export async function loadImagesFromDrive(token: string): Promise<void> {
 
 // ── Coordinated sync ──────────────────────────────────────────────────────────
 
+// Resolves when the current push to Drive is complete; null when idle.
+let pendingPush: Promise<void> | null = null
+export function getDrivePendingPush(): Promise<void> | null { return pendingPush }
+
 // Call after any save/delete. deletedImageIds: blobs to remove from Drive.
 export async function syncAllToDrive(token: string, deletedImageIds: string[] = []): Promise<void> {
+  const run = async () => {
   const [allImages, driveMap] = await Promise.all([db.images.toArray(), listImageFileIds(token)])
 
   // Remove deleted image blobs from Drive
@@ -147,6 +152,9 @@ export async function syncAllToDrive(token: string, deletedImageIds: string[] = 
   )
 
   await Promise.all([saveRecipes(token), saveImageMeta(token)])
+  } // end run
+  pendingPush = run()
+  try { await pendingPush } finally { pendingPush = null }
 }
 
 // Call on login and on tab-focus. Recipes update immediately; images load in background.

@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { useAuthStore } from '../store/authStore'
-import { loadAllFromDrive } from '../lib/drive'
+import { loadAllFromDrive, getDrivePendingPush } from '../lib/drive'
 
 const SYNC_COOLDOWN_MS = 30_000
 
@@ -19,6 +19,10 @@ export function useDriveSync() {
     const sync = async () => {
       if (syncingRef.current) return
       if (Date.now() - lastSyncRef.current < SYNC_COOLDOWN_MS) return
+      // If a local save is currently pushing to Drive, wait for it to finish
+      // then skip the load — local DB is already authoritative.
+      const pending = getDrivePendingPush()
+      if (pending) { await pending; return }
       syncingRef.current = true
       lastSyncRef.current = Date.now()
       try { await loadAllFromDrive(token) } catch { /* silent */ }
