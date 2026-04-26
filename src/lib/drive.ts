@@ -8,9 +8,14 @@ const IMG_PREFIX = 'mise-en-place-image-'
 
 interface ImageMeta { id: string; recipeId: string; caption?: string; order: number }
 
+// ── File ID cache — avoids redundant list calls after the first lookup ────────
+const fileIdCache = new Map<string, string>() // filename → Drive file ID
+export function clearDriveCache() { fileIdCache.clear() }
+
 // ── Low-level helpers ─────────────────────────────────────────────────────────
 
 async function findFileId(token: string, name: string): Promise<string | null> {
+  if (fileIdCache.has(name)) return fileIdCache.get(name)!
   const q = encodeURIComponent(`name = '${name}'`)
   const res = await fetch(
     `${BASE}/drive/v3/files?spaces=appDataFolder&q=${q}&fields=files(id)`,
@@ -18,7 +23,9 @@ async function findFileId(token: string, name: string): Promise<string | null> {
   )
   if (!res.ok) return null
   const data = await res.json() as { files: { id: string }[] }
-  return data.files?.[0]?.id ?? null
+  const id = data.files?.[0]?.id ?? null
+  if (id) fileIdCache.set(name, id)
+  return id
 }
 
 async function upsertJson(token: string, name: string, data: unknown): Promise<void> {
@@ -29,9 +36,14 @@ async function upsertJson(token: string, name: string, data: unknown): Promise<v
     const form = new FormData()
     form.append('metadata', new Blob([meta], { type: 'application/json' }))
     form.append('media', new Blob([body], { type: 'application/json' }))
-    await fetch(`${BASE}/upload/drive/v3/files?uploadType=multipart`, {
+    const res = await fetch(`${BASE}/upload/drive/v3/files?uploadType=multipart`, {
       method: 'POST', headers: { Authorization: `Bearer ${token}` }, body: form,
     })
+    // Cache the newly created file's ID so the next upsert skips the list call
+    if (res.ok) {
+      const created = await res.json() as { id: string }
+      fileIdCache.set(name, created.id)
+    }
   } else {
     await fetch(`${BASE}/upload/drive/v3/files/${fileId}?uploadType=media`, {
       method: 'PATCH',

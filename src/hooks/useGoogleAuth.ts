@@ -1,6 +1,6 @@
 import { useGoogleLogin } from '@react-oauth/google'
 import { useAuthStore, getToken } from '../store/authStore'
-import { loadAllFromDrive } from '../lib/drive'
+import { loadAllFromDrive, clearDriveCache } from '../lib/drive'
 
 export function useGoogleAuth() {
   const setAuth = useAuthStore(s => s.setAuth)
@@ -18,5 +18,7 @@ export function useGoogleAuth() {
     },
   })
 
-  return { token, isSignedIn: !!token, login, logout: clearAuth, getToken }
+  const logout = () => { clearDriveCache(); clearAuth() }
+
+  return { token, isSignedIn: !!token, login, logout, getToken }
 }
