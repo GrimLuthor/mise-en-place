@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { useRecipes } from '../hooks/useRecipes'
 import { useInstallPrompt } from '../hooks/useInstallPrompt'
 import { useGoogleAuth } from '../hooks/useGoogleAuth'
+import { useDriveSync } from '../hooks/useDriveSync'
 import RecipeCard from '../components/RecipeCard'
 import TimeRangeSlider, { formatMinutes, TIME_MAX } from '../components/TimeRangeSlider'
 import type { Recipe } from '../types'
@@ -50,6 +51,7 @@ export default function Gallery() {
   const [timeOn, setTimeOn] = useState(false)
   const { canInstall, install } = useInstallPrompt()
   const { isSignedIn, login, logout } = useGoogleAuth()
+  useDriveSync()
 
   const allTags = [...new Set(recipes?.flatMap(r => r.tags) ?? [])]
 
@@ -82,7 +84,7 @@ export default function Gallery() {
               value={query}
               onChange={e => setQuery(e.target.value)}
               placeholder="Search recipes…"
-              className="flex-1 border border-gray-200 rounded-full px-4 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+              className="flex-1 min-w-0 border border-gray-200 rounded-full px-4 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
             />
             {canInstall && (
               <button
@@ -93,52 +95,76 @@ export default function Gallery() {
                 Install
               </button>
             )}
+            {/* Auth button: desktop only in search row */}
             {isSignedIn ? (
               <button
                 type="button"
                 onClick={logout}
                 title="Signed in — click to sign out"
-                className="shrink-0 flex items-center gap-1.5 text-xs text-emerald-700 font-medium px-2.5 py-1.5 rounded-full bg-emerald-50 hover:bg-emerald-100 transition-colors"
+                className="hidden sm:flex shrink-0 items-center gap-1.5 text-xs text-emerald-700 font-medium px-2.5 py-1.5 rounded-full bg-emerald-50 hover:bg-emerald-100 transition-colors"
               >
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5">
                   <path d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" />
                   <path d="M12 10v6m-3-3l3 3 3-3" />
                 </svg>
-                <span className="hidden sm:inline">Synced</span>
+                Synced
               </button>
             ) : (
               <button
                 type="button"
                 onClick={() => login()}
                 title="Sign in with Google to sync recipes"
-                className="shrink-0 flex items-center gap-1.5 text-xs text-gray-600 font-medium px-2.5 py-1.5 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors"
+                className="hidden sm:flex shrink-0 items-center gap-1.5 text-xs text-gray-600 font-medium px-2.5 py-1.5 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors"
               >
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5">
                   <path d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" />
                 </svg>
-                <span className="hidden sm:inline">Sign in</span>
+                Sign in
               </button>
             )}
           </div>
 
-          {/* Tag pills */}
-          {allTags.length > 0 && (
-            <div className="flex flex-wrap gap-1.5">
-              {allTags.map(tag => (
-                <button
-                  key={tag}
-                  onClick={() => toggleTag(tag)}
-                  className={`text-xs px-3 py-1 rounded-full transition-colors ${
-                    activeTags.includes(tag)
-                      ? 'bg-emerald-600 text-white'
-                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                  }`}
-                >
-                  {tag}
-                </button>
-              ))}
-            </div>
-          )}
+          {/* Tag pills + auth button (mobile) */}
+          <div className="flex flex-wrap items-center gap-1.5">
+            {allTags.map(tag => (
+              <button
+                key={tag}
+                onClick={() => toggleTag(tag)}
+                className={`text-xs px-3 py-1 rounded-full transition-colors ${
+                  activeTags.includes(tag)
+                    ? 'bg-emerald-600 text-white'
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
+              >
+                {tag}
+              </button>
+            ))}
+            {/* Auth button: mobile only, lives here to avoid search row overflow */}
+            {isSignedIn ? (
+              <button
+                type="button"
+                onClick={logout}
+                className="sm:hidden ml-auto flex items-center gap-1 text-xs text-emerald-700 font-medium px-2.5 py-1 rounded-full bg-emerald-50 hover:bg-emerald-100 transition-colors"
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-3 h-3">
+                  <path d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" />
+                  <path d="M12 10v6m-3-3l3 3 3-3" />
+                </svg>
+                Synced
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={() => login()}
+                className="sm:hidden ml-auto flex items-center gap-1 text-xs text-gray-600 font-medium px-2.5 py-1 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors"
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-3 h-3">
+                  <path d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" />
+                </svg>
+                Sign in
+              </button>
+            )}
+          </div>
 
           {/* Time range filter */}
           <div className="flex items-center gap-3 pb-1">

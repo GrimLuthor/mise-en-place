@@ -1,7 +1,6 @@
 import { useGoogleLogin } from '@react-oauth/google'
 import { useAuthStore, getToken } from '../store/authStore'
-import { loadFromDrive } from '../lib/drive'
-import { db } from '../db/db'
+import { loadAllFromDrive } from '../lib/drive'
 
 export function useGoogleAuth() {
   const setAuth = useAuthStore(s => s.setAuth)
@@ -15,13 +14,7 @@ export function useGoogleAuth() {
     scope: 'https://www.googleapis.com/auth/drive.appdata',
     onSuccess: async response => {
       setAuth(response.access_token, response.expires_in)
-      const recipes = await loadFromDrive(response.access_token)
-      if (recipes && recipes.length > 0) {
-        await db.transaction('rw', db.recipes, async () => {
-          await db.recipes.clear()
-          await db.recipes.bulkPut(recipes)
-        })
-      }
+      await loadAllFromDrive(response.access_token)
     },
   })
 

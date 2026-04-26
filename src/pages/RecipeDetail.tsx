@@ -3,7 +3,7 @@ import { useRecipe } from '../hooks/useRecipes'
 import { useRecipeImages } from '../hooks/useImages'
 import { db } from '../db/db'
 import { getToken } from '../store/authStore'
-import { syncToDrive } from '../lib/drive'
+import { syncAllToDrive } from '../lib/drive'
 import ImageCarousel from '../components/ImageCarousel'
 import type { Ingredient } from '../types'
 
@@ -24,10 +24,12 @@ export default function RecipeDetail() {
 
   const handleDelete = async () => {
     if (!confirm(`Delete "${recipe?.title}"?`)) return
+    const recipeImages = await db.images.where('recipeId').equals(id!).toArray()
+    const deletedImageIds = recipeImages.map(i => i.id)
     await db.images.where('recipeId').equals(id!).delete()
     await db.recipes.delete(id!)
     const token = getToken()
-    if (token) syncToDrive(token).catch(() => {})
+    if (token) syncAllToDrive(token, deletedImageIds).catch(() => {})
     navigate('/')
   }
 
