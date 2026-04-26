@@ -2,6 +2,8 @@ import { useParams, useNavigate, Link } from 'react-router-dom'
 import { useRecipe } from '../hooks/useRecipes'
 import { useRecipeImages } from '../hooks/useImages'
 import { db } from '../db/db'
+import { getToken } from '../store/authStore'
+import { syncToDrive } from '../lib/drive'
 import ImageCarousel from '../components/ImageCarousel'
 import type { Ingredient } from '../types'
 
@@ -24,6 +26,8 @@ export default function RecipeDetail() {
     if (!confirm(`Delete "${recipe?.title}"?`)) return
     await db.images.where('recipeId').equals(id!).delete()
     await db.recipes.delete(id!)
+    const token = getToken()
+    if (token) syncToDrive(token).catch(() => {})
     navigate('/')
   }
 
@@ -33,9 +37,17 @@ export default function RecipeDetail() {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-2xl mx-auto px-4 py-6">
-        <Link to="/" className="text-sm text-emerald-600 hover:text-emerald-800 mb-6 inline-block">
-          ← Gallery
-        </Link>
+        <div className="flex items-center justify-between mb-6">
+          <Link to="/" className="text-sm text-emerald-600 hover:text-emerald-800">
+            ← Gallery
+          </Link>
+          <Link
+            to={`/recipe/${recipe.id}/cook`}
+            className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+          >
+            Start Cooking
+          </Link>
+        </div>
 
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
           {images && images.length > 0 && (
@@ -123,12 +135,6 @@ export default function RecipeDetail() {
               className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
             >
               Edit
-            </Link>
-            <Link
-              to={`/recipe/${recipe.id}/cook`}
-              className="bg-gray-100 hover:bg-gray-200 text-gray-800 px-4 py-2 rounded-lg text-sm font-medium transition-colors"
-            >
-              Start Cooking
             </Link>
             <button
               onClick={handleDelete}

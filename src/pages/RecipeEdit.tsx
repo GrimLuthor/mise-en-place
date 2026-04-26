@@ -5,6 +5,8 @@ import { useRecipe } from '../hooks/useRecipes'
 import { useRecipeImages } from '../hooks/useImages'
 import { useDragSort } from '../hooks/useDragSort'
 import { db } from '../db/db'
+import { getToken } from '../store/authStore'
+import { syncToDrive } from '../lib/drive'
 import TagInput from '../components/TagInput'
 import IngredientRow from '../components/IngredientRow'
 import StepRow from '../components/StepRow'
@@ -113,6 +115,8 @@ export default function RecipeEdit() {
     if (images.length > 0) {
       await db.images.bulkAdd(images.map((img, i) => ({ ...img, recipeId: recipe.id, order: i })))
     }
+    const token = getToken()
+    if (token) syncToDrive(token).catch(() => {})
     navigate(`/recipe/${recipe.id}`)
   }
 

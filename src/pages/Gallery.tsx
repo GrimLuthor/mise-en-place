@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useRecipes } from '../hooks/useRecipes'
 import { useInstallPrompt } from '../hooks/useInstallPrompt'
+import { useGoogleAuth } from '../hooks/useGoogleAuth'
 import RecipeCard from '../components/RecipeCard'
 import TimeRangeSlider, { formatMinutes, TIME_MAX } from '../components/TimeRangeSlider'
 import type { Recipe } from '../types'
@@ -48,6 +49,7 @@ export default function Gallery() {
   const [timeRange, setTimeRange] = useState<[number, number]>([0, 120])
   const [timeOn, setTimeOn] = useState(false)
   const { canInstall, install } = useInstallPrompt()
+  const { isSignedIn, login, logout } = useGoogleAuth()
 
   const allTags = [...new Set(recipes?.flatMap(r => r.tags) ?? [])]
 
@@ -86,9 +88,35 @@ export default function Gallery() {
               <button
                 type="button"
                 onClick={install}
-                className="shrink-0 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium px-3 py-1.5 rounded-full transition-colors"
+                className="hidden sm:block shrink-0 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium px-3 py-1.5 rounded-full transition-colors"
               >
                 Install
+              </button>
+            )}
+            {isSignedIn ? (
+              <button
+                type="button"
+                onClick={logout}
+                title="Signed in — click to sign out"
+                className="shrink-0 flex items-center gap-1.5 text-xs text-emerald-700 font-medium px-2.5 py-1.5 rounded-full bg-emerald-50 hover:bg-emerald-100 transition-colors"
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5">
+                  <path d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" />
+                  <path d="M12 10v6m-3-3l3 3 3-3" />
+                </svg>
+                <span className="hidden sm:inline">Synced</span>
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={() => login()}
+                title="Sign in with Google to sync recipes"
+                className="shrink-0 flex items-center gap-1.5 text-xs text-gray-600 font-medium px-2.5 py-1.5 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors"
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5">
+                  <path d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" />
+                </svg>
+                <span className="hidden sm:inline">Sign in</span>
               </button>
             )}
           </div>
