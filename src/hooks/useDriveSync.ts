@@ -22,6 +22,7 @@ export function useDriveSync() {
 
     const onVisible = () => { if (document.visibilityState === 'visible') sync() }
 
+    sync() // sync immediately on mount (covers page reload)
     document.addEventListener('visibilitychange', onVisible)
     window.addEventListener('focus', sync)
     return () => {
