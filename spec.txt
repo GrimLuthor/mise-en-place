@@ -1,0 +1,165 @@
+
+
+# Recipe Gallery PWA — Project Spec
+
+## Goal
+Build a Progressive Web App for storing and using personal recipes collected from around the web. Target users: one or two people in a household. Primary device: desktop browser now, Android phone/tablet in the kitchen later. Deploy target: GitHub Pages (static hosting, no backend).
+
+## Tech Stack
+- **React 18 + TypeScript + Vite** as the foundation
+- **Tailwind CSS** for styling
+- **Dexie.js** (IndexedDB wrapper) for local storage
+- **React Router** for navigation
+- **Zustand** for global state (lighter than Redux, fits this scale)
+- **vite-plugin-pwa** for service worker, manifest, and installability
+- **Workbox** (via vite-plugin-pwa) for offline caching
+- No backend. All data lives client-side in IndexedDB, with optional Google Drive sync as a later phase.
+
+Keep dependencies minimal. If a feature can be done in ~50 lines of vanilla code, don't pull in a library.
+
+## Data Model
+
+A `Recipe` has:
+- `id` (uuid)
+- `title` (string)
+- `description` (string, markdown-supported optional)
+- `tags` (string array)
+- `ingredients` (array of `Ingredient` objects — see structured shape below)
+- `steps` (array of `{id, text}` for reorderability)
+- `images` (array of `{id, blob, caption?}`) — stored as Blobs in IndexedDB, not base64 strings in the main record
+- `sourceUrl` (optional, if imported from a website)
+- `servings` (optional number)
+- `prepTime`, `cookTime` (optional, minutes)
+- `createdAt`, `updatedAt` (timestamps)
+- `notes` (optional free-text field for personal notes)
+
+An `Ingredient` is:
+```ts
+{
+  id: string;
+  quantity?: number;       // e.g., 250, 1.5, 2
+  unit?: string;           // e.g., "g", "ml", "cup", "tbsp", "apples", "cloves"
+  unitType: 'metric_mass' | 'metric_volume' | 'imperial_mass' | 'imperial_volume' | 'count' | 'custom' | 'none';
+  name: string;            // e.g., "flour", "olive oil", "garlic"
+  note?: string;           // e.g., "finely chopped", "room temperature"
+}
+```
+
+The `unitType` is what makes conversion possible. When the user picks a unit from a known list ("g", "kg", "oz", "lb", "ml", "l", "tsp", "tbsp", "cup", "fl oz") it gets categorized into one of the convertible types. When they type a free-form unit ("apples", "cloves", "pinches"), it becomes `count` or `custom` and conversion is disabled for that ingredient.
+
+Images should be stored in a separate Dexie table keyed by recipe id so the main recipe list query stays fast.
+
+## Screens / Features
+
+**1. Gallery (home screen)**
+- Grid of recipe cards showing cover image, title, tags
+- Top bar with search input and a tag filter chip row
+- Search is unified: matches title, description, ingredient name, tag names, and notes. Use a simple lowercase substring match across all fields; don't reach for Fuse.js unless basic search proves inadequate.
+- Clicking a card opens the recipe detail view
+- Floating "+ New Recipe" button
+
+**2. Recipe Detail View (read mode)**
+- Image carousel at top (swipeable on touch, arrows on desktop)
+- Title, tags, servings, times
+- Ingredients list rendered as `{quantity} {unit} {name}{, note}` — e.g., "250 g flour, sifted"
+- Steps as numbered list
+- Notes section
+- Buttons: Edit, Delete, Start Cooking Mode, Share (later)
+
+**3. Recipe Edit View**
+- All fields editable
+- Ingredients: each is its own row with these inline inputs:
+  - Quantity (small numeric input)
+  - Unit (combobox: shows a dropdown of known units grouped by category — Mass, Volume, Count — plus a "custom" option that lets the user type freely; selecting from the known list auto-sets `unitType`, typing custom sets it to `custom`)
+  - Name (text input, takes most of the width)
+  - Note (smaller text input or expandable)
+  - Drag handle for reordering, delete button
+- "Add ingredient" button at bottom. Pressing Enter in any ingredient field creates a new row below and focuses the quantity field of the new row.
+- Steps: similar row pattern with text and reorder/delete
+- Tags: chip-style input, comma or Enter to commit a new tag, backspace on empty input deletes last tag
+- Images: drag-and-drop zone plus file picker. Show thumbnails with delete buttons and ability to reorder.
+- Save / Cancel buttons
+
+**4. Cooking Mode** *(this is where the new features matter most)*
+- Full-screen layout, larger fonts, high contrast
+- Screen stays awake via `navigator.wakeLock.request('screen')` — handle the promise properly, re-acquire on visibility change, release on exit
+- Request fullscreen via the Fullscreen API
+- Two-pane layout on desktop (ingredients left, steps right), stacked on mobile
+
+**Ingredient interaction in cooking mode:**
+- Each ingredient is a checkbox row. The **entire row is the click target** — tapping anywhere on the ingredient text (or the checkbox itself) toggles the checked state. Use a `<label>` wrapping both the checkbox and the text, or a button with proper ARIA, so it's both accessible and feels generous to tap on a phone with messy hands.
+- Checked ingredients get a visual treatment: strikethrough text, dimmed opacity (~40%), maybe a subtle color shift. Still readable in case they need to glance back.
+- Checked state is **ephemeral to the cooking session** — it resets when cooking mode is exited. Don't persist it to the recipe.
+- Tap targets should be at least 48px tall (mobile-friendly). Generous vertical padding on each row.
+
+**Unit conversion in cooking mode:**
+- For ingredients with a convertible `unitType` (metric_mass, metric_volume, imperial_mass, imperial_volume), show a small subtle indicator next to the unit — an icon or tiny "⇄" — that signals it's tappable.
+- Tapping/clicking the unit (or the indicator) opens a small popover/dropdown showing the same quantity converted to other units in the same category. For example, "250 g" expands to show "8.82 oz" and "0.55 lb"; "1 cup" expands to show "237 ml", "16 tbsp", "48 tsp".
+- Selecting a conversion **replaces the displayed value for the rest of the cooking session** (also ephemeral — don't write back to the recipe). This way she can flip the whole recipe to her preferred units while cooking without editing the source.
+- For ingredients with `unitType` of `count`, `custom`, or `none`, no conversion UI — just display as-is. "3 apples" doesn't get a conversion icon.
+
+Conversion logic: implement as a small pure module (`src/lib/units.ts`) with a table of conversion factors to a base unit per category (grams for mass, milliliters for volume), and a function `getConversions(quantity, unit, unitType)` that returns an array of `{quantity, unit}` for the other units in that category. Round sensibly — 2 decimal places for most, but strip trailing zeros. Don't over-engineer; a flat lookup table covers all the cooking units anyone needs.
+
+Suggested unit lists:
+- **Metric mass**: g, kg
+- **Metric volume**: ml, l
+- **Imperial mass**: oz, lb
+- **Imperial volume**: tsp, tbsp, fl oz, cup, pint, quart, gallon
+
+Cross-category conversions (volume to mass) are *not* supported — they require ingredient density and that's a rabbit hole. If she wants "how many grams of flour is 1 cup," she can google it. Keep the scope tight.
+
+**Steps interaction in cooking mode:**
+- Steps have large tap targets to mark current step (visual highlight on the active step)
+- Exit button prominently visible
+
+**5. New Recipe from URL (stretch, phase 2)**
+- Paste a URL, the app fetches it and tries to extract recipe data. Use schema.org/Recipe JSON-LD parsing — most recipe sites include it. Fall back to manual entry if not found.
+- Because GitHub Pages has no backend and CORS will block most fetches, this needs a proxy. Defer this feature and stub the button for now.
+
+## Offline & PWA Requirements
+- App shell cached via service worker (Workbox) so it loads instantly offline
+- All recipe data is local-first in IndexedDB, so the app is fully usable offline by default
+- Manifest with icons (provide placeholder icons, note that real icons can be swapped in later)
+- Installable on desktop Chrome and Android
+- Handle the `beforeinstallprompt` event to offer a custom install button somewhere in the UI
+
+## Routing
+- `/` — gallery
+- `/recipe/:id` — detail view
+- `/recipe/:id/edit` — edit view
+- `/new` — create view (same component as edit, with empty state)
+- `/recipe/:id/cook` — cooking mode
+- Use `HashRouter` because GitHub Pages doesn't support SPA routing on refresh with `BrowserRouter`.
+
+## Deployment
+- Configure Vite `base` for GitHub Pages subpath (`/<repo-name>/`)
+- Include a GitHub Actions workflow that builds on push to `main` and deploys to the `gh-pages` branch
+- Ensure the PWA manifest `start_url` and `scope` respect the subpath
+
+## What to Build First (Phased)
+1. Scaffold the project, set up routing, Tailwind, Dexie schema (including the structured Ingredient shape)
+2. Gallery + Create/Edit/Delete flow with local storage, no images yet — including the multi-field ingredient row editor
+3. Image support (upload, store as Blob, display with object URLs — remember to revoke them)
+4. Search and tag filtering
+5. Cooking mode: wake lock, fullscreen, ingredient checkboxes with full-row tap target, unit conversion popover
+6. PWA configuration, service worker, manifest, install prompt
+7. GitHub Actions deployment workflow
+
+Stop after each phase and show me what's working before moving on. Don't try to build everything in one shot.
+
+## Code Quality Expectations
+- TypeScript strict mode, no `any`
+- Components are small and focused; extract when a file crosses ~150 lines
+- Custom hooks for Dexie queries (`useRecipes`, `useRecipe(id)`) using `dexie-react-hooks` `useLiveQuery`
+- No inline styles except dynamic values; all styling through Tailwind
+- Unit conversion logic lives in a pure, well-tested module — no React imports, just functions
+- Accessible: semantic HTML, keyboard navigation works everywhere, focus management on modal/route changes, ARIA where genuinely needed. The full-row ingredient checkbox in cooking mode must be keyboard-operable (Space toggles).
+
+## Things I'll Add Later (Don't Build Now, But Don't Preclude)
+- Google Drive sync — leave a clean abstraction layer over Dexie so a sync adapter can be added without rewriting features
+- AI suggestion tab — will hit an external API via a Cloudflare Worker proxy; just leave a nav slot for it
+- Import from URL via schema.org parsing
+- Per-ingredient unit preference persistence (e.g., "always show me grams") — for now, conversions are session-only
+
+## Questions to Ask Me Before Starting
+Only ask if something is genuinely ambiguous — don't ask about styling preferences, color schemes, or other aesthetic choices; make reasonable defaults and I'll iterate. If the spec contradicts itself or a technical choice has a major tradeoff I didn't address, surface it.
