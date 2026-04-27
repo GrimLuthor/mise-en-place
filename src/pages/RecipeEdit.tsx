@@ -11,6 +11,7 @@ import TagInput from '../components/TagInput'
 import IngredientRow from '../components/IngredientRow'
 import StepRow from '../components/StepRow'
 import ImageUpload from '../components/ImageUpload'
+import ThemeToggleButton from '../components/ThemeToggleButton'
 import type { Ingredient, Step, Recipe, RecipeImage } from '../types'
 
 interface FormState {
@@ -144,31 +145,32 @@ export default function RecipeEdit() {
     navigate(`/recipe/${recipe.id}`)
   }
 
-  if (!initialized || !imagesReady) return <p className="p-12 text-center text-gray-400">Loading…</p>
+  if (!initialized || !imagesReady) return <p className="p-12 text-center text-muted">Loading…</p>
 
   const recipeId = existingRecipe?.id ?? ''
 
   const field = (label: string, children: React.ReactNode) => (
     <div>
-      <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
+      <label className="block text-sm font-medium text-body mb-1">{label}</label>
       {children}
     </div>
   )
 
-  const inputCls = 'w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent'
+  const inputCls = 'w-full border border-input bg-input text-primary rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent'
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-page">
       <div className="max-w-2xl mx-auto px-4 py-6">
         <div className="flex items-center gap-3 mb-6">
-          <Link to={isNew ? '/' : `/recipe/${id}`} className="text-sm text-emerald-600 hover:text-emerald-800">
+          <Link to={isNew ? '/' : `/recipe/${id}`} className="text-sm text-accent hover:text-accent-dark">
             ← {isNew ? 'Gallery' : 'Back'}
           </Link>
-          <h1 className="text-lg font-semibold text-gray-900">{isNew ? 'New Recipe' : 'Edit Recipe'}</h1>
+          <h1 className="text-lg font-semibold text-primary flex-1">{isNew ? 'New Recipe' : 'Edit Recipe'}</h1>
+          <ThemeToggleButton />
         </div>
 
         <div className="space-y-5">
-          <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5 space-y-4">
+          <div className="bg-card rounded-xl border border-card shadow-sm p-5 space-y-4">
             {field('Title *',
               <input type="text" value={form.title}
                 onChange={e => { setForm(f => ({ ...f, title: e.target.value })); setTitleError(false) }}
@@ -214,7 +216,7 @@ export default function RecipeEdit() {
                       type="button"
                       onClick={() => setForm(f => ({ ...f, sourceUrls: f.sourceUrls.filter((_, j) => j !== i) }))}
                       aria-label="Remove URL"
-                      className="w-8 h-9 flex items-center justify-center text-gray-400 hover:text-red-500 transition-colors shrink-0"
+                      className="w-8 h-9 flex items-center justify-center text-muted hover:text-red-500 transition-colors shrink-0"
                     >
                       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="w-3.5 h-3.5">
                         <path d="M18 6L6 18M6 6l12 12" />
@@ -225,7 +227,7 @@ export default function RecipeEdit() {
                 <button
                   type="button"
                   onClick={() => setForm(f => ({ ...f, sourceUrls: [...f.sourceUrls, ''] }))}
-                  className="text-sm text-emerald-600 hover:text-emerald-800 font-medium"
+                  className="text-sm text-accent hover:text-accent-dark font-medium"
                 >
                   + Add URL
                 </button>
@@ -233,13 +235,13 @@ export default function RecipeEdit() {
             )}
           </div>
 
-          <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
-            <h2 className="font-semibold text-gray-900 mb-3">Photos</h2>
+          <div className="bg-card rounded-xl border border-card shadow-sm p-5">
+            <h2 className="font-semibold text-primary mb-3">Photos</h2>
             <ImageUpload recipeId={recipeId} images={images} onChange={setImages} />
           </div>
 
-          <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
-            <h2 className="font-semibold text-gray-900 mb-3">Ingredients</h2>
+          <div className="bg-card rounded-xl border border-card shadow-sm p-5">
+            <h2 className="font-semibold text-primary mb-3">Ingredients</h2>
             <div className="space-y-2">
               {form.ingredients.map((ing, i) => (
                 <IngredientRow key={ing.id} ingredient={ing}
@@ -253,11 +255,11 @@ export default function RecipeEdit() {
             </div>
             <div className="mt-3 flex items-center gap-4">
               <button type="button" onClick={() => addIngredientAfter(form.ingredients.length - 1)}
-                className="text-sm text-emerald-600 hover:text-emerald-800 font-medium">
+                className="text-sm text-accent hover:text-accent-dark font-medium">
                 + Add ingredient
               </button>
               <button type="button" onClick={() => setShowPasteIng(s => !s)}
-                className="text-sm text-gray-400 hover:text-gray-600 font-medium">
+                className="text-sm text-muted hover:text-secondary font-medium">
                 {showPasteIng ? '− Hide paste' : '+ Paste list'}
               </button>
             </div>
@@ -272,15 +274,15 @@ export default function RecipeEdit() {
                   className={`${inputCls} resize-y`}
                 />
                 <button type="button" onClick={importPastedIngredients}
-                  className="text-sm bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-lg font-medium transition-colors">
+                  className="text-sm bg-accent hover:bg-accent-hover text-white px-3 py-1.5 rounded-lg font-medium transition-colors">
                   Import
                 </button>
               </div>
             )}
           </div>
 
-          <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
-            <h2 className="font-semibold text-gray-900 mb-3">Steps</h2>
+          <div className="bg-card rounded-xl border border-card shadow-sm p-5">
+            <h2 className="font-semibold text-primary mb-3">Steps</h2>
             <div className="space-y-2">
               {form.steps.map((step, i) => (
                 <StepRow key={step.id} step={step} index={i}
@@ -294,11 +296,11 @@ export default function RecipeEdit() {
             </div>
             <div className="mt-3 flex items-center gap-4">
               <button type="button" onClick={() => addStepAfter(form.steps.length - 1)}
-                className="text-sm text-emerald-600 hover:text-emerald-800 font-medium">
+                className="text-sm text-accent hover:text-accent-dark font-medium">
                 + Add step
               </button>
               <button type="button" onClick={() => setShowPasteStep(s => !s)}
-                className="text-sm text-gray-400 hover:text-gray-600 font-medium">
+                className="text-sm text-muted hover:text-secondary font-medium">
                 {showPasteStep ? '− Hide paste' : '+ Paste list'}
               </button>
             </div>
@@ -313,14 +315,14 @@ export default function RecipeEdit() {
                   className={`${inputCls} resize-y`}
                 />
                 <button type="button" onClick={importPastedSteps}
-                  className="text-sm bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-lg font-medium transition-colors">
+                  className="text-sm bg-accent hover:bg-accent-hover text-white px-3 py-1.5 rounded-lg font-medium transition-colors">
                   Import
                 </button>
               </div>
             )}
           </div>
 
-          <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
+          <div className="bg-card rounded-xl border border-card shadow-sm p-5">
             {field('Personal notes',
               <textarea value={form.notes}
                 onChange={e => setForm(f => ({ ...f, notes: e.target.value }))}
@@ -331,11 +333,11 @@ export default function RecipeEdit() {
 
           <div className="flex gap-3 pb-6">
             <button type="button" onClick={handleSave}
-              className="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-2.5 rounded-lg text-sm font-medium transition-colors">
+              className="bg-accent hover:bg-accent-hover text-white px-6 py-2.5 rounded-lg text-sm font-medium transition-colors">
               Save Recipe
             </button>
             <Link to={isNew ? '/' : `/recipe/${id}`}
-              className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-6 py-2.5 rounded-lg text-sm font-medium transition-colors">
+              className="bg-surface hover:bg-surface-hover text-body px-6 py-2.5 rounded-lg text-sm font-medium transition-colors">
               Cancel
             </Link>
           </div>

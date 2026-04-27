@@ -24,15 +24,15 @@ export default function TagInput({ tags, onChange }: Props) {
   }
 
   return (
-    <div className="flex flex-wrap gap-1.5 p-2 border border-gray-300 rounded-lg min-h-10 focus-within:ring-2 focus-within:ring-emerald-500 focus-within:border-emerald-500 cursor-text">
+    <div className="flex flex-wrap gap-1.5 p-2 border border-input bg-input rounded-lg min-h-10 focus-within:ring-2 focus-within:ring-emerald-500 focus-within:border-emerald-500 cursor-text">
       {tags.map(tag => (
-        <span key={tag} className="flex items-center gap-1 bg-emerald-100 text-emerald-800 text-sm px-2 py-0.5 rounded-full">
+        <span key={tag} className="flex items-center gap-1 bg-accent-tag text-accent-tag text-sm px-2 py-0.5 rounded-full">
           {tag}
           <button
             type="button"
             onClick={() => onChange(tags.filter(t => t !== tag))}
             aria-label={`Remove tag ${tag}`}
-            className="text-emerald-500 hover:text-emerald-900 leading-none"
+            className="text-accent hover:text-primary leading-none"
           >
             ×
           </button>
@@ -45,7 +45,7 @@ export default function TagInput({ tags, onChange }: Props) {
         onKeyDown={handleKeyDown}
         onBlur={() => { if (input.trim()) commit(input) }}
         placeholder={tags.length === 0 ? 'Add tags (Enter or comma to confirm)…' : ''}
-        className="flex-1 min-w-32 outline-none text-sm bg-transparent"
+        className="flex-1 min-w-32 outline-none text-sm bg-transparent text-primary"
       />
     </div>
   )

@@ -4,8 +4,10 @@ import { useRecipes } from '../hooks/useRecipes'
 import { useInstallPrompt } from '../hooks/useInstallPrompt'
 import { useGoogleAuth } from '../hooks/useGoogleAuth'
 import { useDriveSync } from '../hooks/useDriveSync'
+import { useStorageSize } from '../hooks/useStorageSize'
 import RecipeCard from '../components/RecipeCard'
-import TimeRangeSlider, { formatMinutes, TIME_MAX } from '../components/TimeRangeSlider'
+import ThemeToggleButton from '../components/ThemeToggleButton'
+import TimeRangeSlider, { TIME_MAX } from '../components/TimeRangeSlider'
 import type { Recipe } from '../types'
 
 interface MatchResult {
@@ -17,7 +19,6 @@ function totalMinutes(r: Recipe) {
   return (r.prepTime ?? 0) + (r.cookTime ?? 0)
 }
 
-
 function getMatchResult(recipe: Recipe, q: string): MatchResult | null {
   if (!q) return { rank: 0, matchLabel: '' }
   const lq = q.toLowerCase()
@@ -25,7 +26,7 @@ function getMatchResult(recipe: Recipe, q: string): MatchResult | null {
   const titleHit = recipe.title.toLowerCase().includes(lq)
   const tagHit   = recipe.tags.some(t => t.includes(lq))
   const descHit  = recipe.description.toLowerCase().includes(lq)
-  const ingHit   = recipe.ingredients.some(i => i.name.toLowerCase().includes(lq))
+  const ingHit   = recipe.ingredients.some(i => i.text.toLowerCase().includes(lq))
   const noteHit  = recipe.notes?.toLowerCase().includes(lq) ?? false
 
   if (!titleHit && !tagHit && !descHit && !ingHit && !noteHit) return null
@@ -47,10 +48,11 @@ export default function Gallery() {
   const recipes = useRecipes()
   const [query, setQuery] = useState('')
   const [activeTags, setActiveTags] = useState<string[]>([])
-  const [timeRange, setTimeRange] = useState<[number, number]>([0, 120])
+  const [timeRange, setTimeRange] = useState<[number, number]>([0, TIME_MAX])
   const [timeOn, setTimeOn] = useState(false)
   const { canInstall, install } = useInstallPrompt()
   const { isSignedIn, login, logout } = useGoogleAuth()
+  const storageSize = useStorageSize()
   useDriveSync()
 
   const allTags = [...new Set(recipes?.flatMap(r => r.tags) ?? [])]
@@ -72,36 +74,36 @@ export default function Gallery() {
     .sort((a, b) => a.match!.rank - b.match!.rank)
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white border-b border-gray-100 sticky top-0 z-10 shadow-sm">
+    <div className="min-h-screen bg-page">
+      <header className="bg-header border-b border-header sticky top-0 z-10 shadow-sm">
         <div className="max-w-5xl mx-auto px-4 py-3 space-y-2">
 
           {/* Search row */}
           <div className="flex items-center gap-3">
-            <h1 className="text-xl font-bold text-emerald-700 shrink-0">Mise en Place</h1>
+            <h1 className="text-xl font-bold text-accent-dark shrink-0">Mise en Place</h1>
             <input
               type="search"
               value={query}
               onChange={e => setQuery(e.target.value)}
               placeholder="Search recipes…"
-              className="flex-1 min-w-0 border border-gray-200 rounded-full px-4 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+              className="flex-1 min-w-0 border border-input bg-input text-primary rounded-full px-4 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
             />
             {canInstall && (
               <button
                 type="button"
                 onClick={install}
-                className="hidden sm:block shrink-0 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium px-3 py-1.5 rounded-full transition-colors"
+                className="hidden sm:block shrink-0 bg-accent hover:bg-accent-hover text-white text-sm font-medium px-3 py-1.5 rounded-full transition-colors"
               >
                 Install
               </button>
             )}
-            {/* Auth button: desktop only in search row */}
+            {/* Auth button: desktop only */}
             {isSignedIn ? (
               <button
                 type="button"
                 onClick={logout}
                 title="Signed in — click to sign out"
-                className="hidden sm:flex shrink-0 items-center gap-1.5 text-xs text-emerald-700 font-medium px-2.5 py-1.5 rounded-full bg-emerald-50 hover:bg-emerald-100 transition-colors"
+                className="hidden sm:flex shrink-0 items-center gap-1.5 text-xs text-accent-dark font-medium px-2.5 py-1.5 rounded-full bg-accent-subtle hover:bg-accent-subtle-hover transition-colors"
               >
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5">
                   <path d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" />
@@ -114,7 +116,7 @@ export default function Gallery() {
                 type="button"
                 onClick={() => login()}
                 title="Sign in with Google to sync recipes"
-                className="hidden sm:flex shrink-0 items-center gap-1.5 text-xs text-gray-600 font-medium px-2.5 py-1.5 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors"
+                className="hidden sm:flex shrink-0 items-center gap-1.5 text-xs text-secondary font-medium px-2.5 py-1.5 rounded-full bg-surface hover:bg-surface-hover transition-colors"
               >
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5">
                   <path d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" />
@@ -122,9 +124,10 @@ export default function Gallery() {
                 Sign in
               </button>
             )}
+            <ThemeToggleButton />
           </div>
 
-          {/* Tag pills + auth button (mobile) */}
+          {/* Tag pills + mobile auth */}
           <div className="flex flex-wrap items-center gap-1.5">
             {allTags.map(tag => (
               <button
@@ -132,20 +135,20 @@ export default function Gallery() {
                 onClick={() => toggleTag(tag)}
                 className={`text-xs px-3 py-1 rounded-full transition-colors ${
                   activeTags.includes(tag)
-                    ? 'bg-emerald-600 text-white'
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    ? 'bg-accent text-white'
+                    : 'bg-surface text-secondary hover:bg-surface-hover'
                 }`}
               >
                 {tag}
               </button>
             ))}
-            {/* Install + auth: mobile only, lives here to avoid search row overflow */}
+            {/* Install + auth: mobile only */}
             <div className="sm:hidden ml-auto flex items-center gap-1.5">
               {canInstall && (
                 <button
                   type="button"
                   onClick={install}
-                  className="flex items-center gap-1 text-xs text-emerald-700 font-medium px-2.5 py-1 rounded-full bg-emerald-50 hover:bg-emerald-100 transition-colors"
+                  className="flex items-center gap-1 text-xs text-accent-dark font-medium px-2.5 py-1 rounded-full bg-accent-subtle hover:bg-accent-subtle-hover transition-colors"
                 >
                   Install
                 </button>
@@ -154,7 +157,7 @@ export default function Gallery() {
                 <button
                   type="button"
                   onClick={logout}
-                  className="flex items-center gap-1 text-xs text-emerald-700 font-medium px-2.5 py-1 rounded-full bg-emerald-50 hover:bg-emerald-100 transition-colors"
+                  className="flex items-center gap-1 text-xs text-accent-dark font-medium px-2.5 py-1 rounded-full bg-accent-subtle hover:bg-accent-subtle-hover transition-colors"
                 >
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-3 h-3">
                     <path d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" />
@@ -166,7 +169,7 @@ export default function Gallery() {
                 <button
                   type="button"
                   onClick={() => login()}
-                  className="flex items-center gap-1 text-xs text-gray-600 font-medium px-2.5 py-1 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors"
+                  className="flex items-center gap-1 text-xs text-secondary font-medium px-2.5 py-1 rounded-full bg-surface hover:bg-surface-hover transition-colors"
                 >
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-3 h-3">
                     <path d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" />
@@ -186,7 +189,7 @@ export default function Gallery() {
                 onChange={e => setTimeOn(e.target.checked)}
                 className="w-3.5 h-3.5 accent-sky-500"
               />
-              <span className={`text-xs font-medium ${timeOn ? 'text-sky-600' : 'text-gray-400'}`}>
+              <span className={`text-xs font-medium ${timeOn ? 'text-sky-600' : 'text-muted'}`}>
                 Total time
               </span>
             </label>
@@ -200,9 +203,9 @@ export default function Gallery() {
 
       <main className="max-w-5xl mx-auto px-4 py-6">
         {recipes === undefined ? (
-          <p className="text-center text-gray-400 mt-24">Loading…</p>
+          <p className="text-center text-muted mt-24">Loading…</p>
         ) : withMatch.length === 0 ? (
-          <p className="text-center text-gray-400 mt-24">
+          <p className="text-center text-muted mt-24">
             {recipes.length === 0 ? 'No recipes yet — add your first one!' : 'No recipes match your search.'}
           </p>
         ) : (
@@ -216,10 +219,16 @@ export default function Gallery() {
 
       <Link
         to="/new"
-        className="fixed bottom-6 right-6 bg-emerald-600 hover:bg-emerald-700 text-white rounded-full shadow-lg px-5 py-3 text-sm font-medium transition-colors"
+        className="fixed bottom-6 right-6 bg-accent hover:bg-accent-hover text-white rounded-full shadow-lg px-5 py-3 text-sm font-medium transition-colors"
       >
         + New Recipe
       </Link>
+
+      {storageSize && (
+        <div className="fixed bottom-6 left-6 text-xs text-muted bg-card border border-card rounded-full px-3 py-1.5 shadow-sm select-none">
+          {storageSize} stored
+        </div>
+      )}
     </div>
   )
 }

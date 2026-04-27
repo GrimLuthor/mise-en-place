@@ -28,7 +28,7 @@ export default function TimeRangeSlider({ value, onChange }: Props) {
     if (!isNaN(n)) onChange([lo, n])
   }
 
-  const inputCls = 'w-16 text-center border border-gray-300 rounded px-1 py-0.5 text-sm focus:outline-none focus:ring-1 focus:ring-sky-500'
+  const inputCls = 'w-16 text-center border border-input bg-input text-primary rounded px-1 py-0.5 text-sm focus:outline-none focus:ring-1 focus:ring-sky-500'
 
   return (
     <div className="flex items-center gap-2">
@@ -40,10 +40,10 @@ export default function TimeRangeSlider({ value, onChange }: Props) {
           aria-label="Minimum time (minutes)"
           className={inputCls}
         />
-        <span className="text-[10px] text-gray-400">{formatMinutes(lo)}</span>
+        <span className="text-[10px] text-muted">{formatMinutes(lo)}</span>
       </div>
 
-      <span className="text-gray-300 text-sm">—</span>
+      <span className="text-faint text-sm">—</span>
 
       <div className="flex flex-col items-center gap-0.5">
         <input
@@ -53,7 +53,7 @@ export default function TimeRangeSlider({ value, onChange }: Props) {
           aria-label="Maximum time (minutes)"
           className={inputCls}
         />
-        <span className="text-[10px] text-gray-400">{formatMinutes(hi)}</span>
+        <span className="text-[10px] text-muted">{formatMinutes(hi)}</span>
       </div>
     </div>
   )

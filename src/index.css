@@ -1,1 +1,142 @@
 @import "tailwindcss";
+
+/* ── Theme design tokens ─────────────────────────────────── */
+:root, [data-theme="light"] {
+  --c-page: #f9fafb;
+  --c-card: #ffffff;
+  --c-card-border: #f3f4f6;
+  --c-header: #ffffff;
+  --c-header-border: #f3f4f6;
+  --c-input: #ffffff;
+  --c-input-border: #d1d5db;
+  --c-surface: #f3f4f6;
+  --c-surface-hover: #e5e7eb;
+  --c-drag: #ecfdf5;
+  --c-drag-border: #34d399;
+  --c-grad-from: #ecfdf5;
+  --c-grad-to: #99f6e4;
+
+  --c-text-1: #111827;
+  --c-text-2: #374151;
+  --c-text-3: #6b7280;
+  --c-text-4: #9ca3af;
+  --c-text-5: #d1d5db;
+
+  --c-accent: #059669;
+  --c-accent-hover: #047857;
+  --c-accent-subtle: #ecfdf5;
+  --c-accent-subtle-hover: #d1fae5;
+  --c-accent-text: #047857;
+  --c-accent-tag-bg: #d1fae5;
+  --c-accent-tag-text: #065f46;
+  --c-accent-ring: #059669;
+}
+
+[data-theme="dark"] {
+  --c-page: #0f172a;
+  --c-card: #1e293b;
+  --c-card-border: #334155;
+  --c-header: #1e293b;
+  --c-header-border: #334155;
+  --c-input: #0f172a;
+  --c-input-border: #475569;
+  --c-surface: #334155;
+  --c-surface-hover: #475569;
+  --c-drag: #022c22;
+  --c-drag-border: #34d399;
+  --c-grad-from: #1e3a34;
+  --c-grad-to: #0f2420;
+
+  --c-text-1: #f1f5f9;
+  --c-text-2: #cbd5e1;
+  --c-text-3: #94a3b8;
+  --c-text-4: #64748b;
+  --c-text-5: #334155;
+
+  --c-accent: #34d399;
+  --c-accent-hover: #10b981;
+  --c-accent-subtle: #022c22;
+  --c-accent-subtle-hover: #064e3b;
+  --c-accent-text: #6ee7b7;
+  --c-accent-tag-bg: #064e3b;
+  --c-accent-tag-text: #a7f3d0;
+  --c-accent-ring: #34d399;
+}
+
+[data-theme="warm"] {
+  --c-page: #fdf8f0;
+  --c-card: #fffcf5;
+  --c-card-border: #e8dcc8;
+  --c-header: #fffcf5;
+  --c-header-border: #e8dcc8;
+  --c-input: #fffcf5;
+  --c-input-border: #c9b89a;
+  --c-surface: #f5ebe0;
+  --c-surface-hover: #ecd9c7;
+  --c-drag: #fff7ed;
+  --c-drag-border: #f59e0b;
+  --c-grad-from: #fef3c7;
+  --c-grad-to: #fed7aa;
+
+  --c-text-1: #1c0a00;
+  --c-text-2: #44230a;
+  --c-text-3: #7c5435;
+  --c-text-4: #b08b6e;
+  --c-text-5: #d4b896;
+
+  --c-accent: #d97706;
+  --c-accent-hover: #b45309;
+  --c-accent-subtle: #fff7ed;
+  --c-accent-subtle-hover: #fed7aa;
+  --c-accent-text: #b45309;
+  --c-accent-tag-bg: #fed7aa;
+  --c-accent-tag-text: #7c2d12;
+  --c-accent-ring: #d97706;
+}
+
+/* ── Semantic utilities ───────────────────────────────────── */
+@utility bg-page          { background-color: var(--c-page); }
+@utility bg-card          { background-color: var(--c-card); }
+@utility border-card      { border-color: var(--c-card-border); }
+@utility bg-header        { background-color: var(--c-header); }
+@utility border-header    { border-color: var(--c-header-border); }
+@utility bg-input         { background-color: var(--c-input); }
+@utility border-input     { border-color: var(--c-input-border); }
+@utility bg-surface       { background-color: var(--c-surface); }
+@utility bg-surface-hover { background-color: var(--c-surface-hover); }
+@utility bg-drag          { background-color: var(--c-drag); }
+@utility border-drag      { border-color: var(--c-drag-border); }
+@utility bg-card-gradient {
+  background-image: linear-gradient(to bottom right, var(--c-grad-from), var(--c-grad-to));
+}
+
+@utility text-primary  { color: var(--c-text-1); }
+@utility text-body     { color: var(--c-text-2); }
+@utility text-secondary { color: var(--c-text-3); }
+@utility text-muted    { color: var(--c-text-4); }
+@utility text-faint    { color: var(--c-text-5); }
+
+@utility text-accent       { color: var(--c-accent); }
+@utility text-accent-dark  { color: var(--c-accent-text); }
+@utility text-accent-tag   { color: var(--c-accent-tag-text); }
+@utility bg-accent         { background-color: var(--c-accent); }
+@utility bg-accent-hover   { background-color: var(--c-accent-hover); }
+@utility bg-accent-subtle  { background-color: var(--c-accent-subtle); }
+@utility bg-accent-subtle-hover { background-color: var(--c-accent-subtle-hover); }
+@utility bg-accent-tag     { background-color: var(--c-accent-tag-bg); }
+
+/* ── Focus ring theme override ───────────────────────────── */
+[data-theme="warm"] .focus\:ring-emerald-500:focus,
+[data-theme="warm"] .focus-within\:ring-emerald-500:focus-within {
+  --tw-ring-color: var(--c-accent-ring);
+}
+[data-theme="warm"] .focus-within\:border-emerald-500:focus-within {
+  border-color: var(--c-accent);
+}
+[data-theme="dark"] .focus\:ring-emerald-500:focus,
+[data-theme="dark"] .focus-within\:ring-emerald-500:focus-within {
+  --tw-ring-color: var(--c-accent-ring);
+}
+[data-theme="dark"] .focus-within\:border-emerald-500:focus-within {
+  border-color: var(--c-accent);
+}

@@ -47,12 +47,12 @@ export default function ImageUpload({ recipeId, images, onChange }: Props) {
                 onDragOver={drag.onDragOver(i)}
                 onDrop={drag.onDrop}
                 className={`relative group w-24 h-24 rounded-lg overflow-hidden border-2 shrink-0 ${
-                  drag.dragIdx === i ? 'opacity-40 border-emerald-400' : 'border-gray-200'
+                  drag.dragIdx === i ? 'opacity-40 border-drag' : 'border-input'
                 }`}
               >
                 {url
                   ? <img src={url} alt={`Image ${i + 1}`} className="w-full h-full object-cover" />
-                  : <div className="w-full h-full bg-gray-100" />
+                  : <div className="w-full h-full bg-surface" />
                 }
                 <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors" />
                 <button
@@ -85,7 +85,7 @@ export default function ImageUpload({ recipeId, images, onChange }: Props) {
         onKeyDown={e => e.key === 'Enter' && fileInputRef.current?.click()}
         aria-label="Upload images"
         className={`border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors ${
-          dropping ? 'border-emerald-500 bg-emerald-50' : 'border-gray-300 hover:border-gray-400'
+          dropping ? 'border-drag bg-drag' : 'border-input hover:border-muted'
         }`}
       >
         <input
@@ -96,10 +96,10 @@ export default function ImageUpload({ recipeId, images, onChange }: Props) {
           onChange={e => addFiles(e.target.files)}
           className="hidden"
         />
-        <p className="text-sm text-gray-500">
-          Drop images here or <span className="text-emerald-600 font-medium">click to upload</span>
+        <p className="text-sm text-secondary">
+          Drop images here or <span className="text-accent font-medium">click to upload</span>
         </p>
-        <p className="text-xs text-gray-400 mt-1">Drag thumbnails to reorder</p>
+        <p className="text-xs text-muted mt-1">Drag thumbnails to reorder</p>
       </div>
     </div>
   )
